@@ -47,10 +47,14 @@ class Minesweeper(object):
             # Initializing empty board using 2d np.array of a number indicating mines
             board = np.array([[_EMPTY_] * self.width] * self.height, np.int32)
 
-            # Make sure first click is not a mine
+            # Make sure first click is a empty grid
             first_click_serial = first_click[0] * self.width + first_click[1]
+            unavailable = [first_click_serial]
+            for row,col in self.neighbors(first_click[0],first_click[1]):
+                unavailable.append(row*self.width + col)
             available_squares = list(range(self.width * self.height))
-            available_squares.pop(first_click_serial)
+            for serial in unavailable:
+                available_squares.pop(serial)
             serials = random.sample(available_squares, k=self.num_mines)
 
             # Generate mines on the board and stores their locations
