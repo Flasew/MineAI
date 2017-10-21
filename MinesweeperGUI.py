@@ -41,7 +41,7 @@ class MinesweeperGUI(QMainWindow):
 
     _BACKGROUND = """
 QMainWindow{
-background-color: 0xC0C0C0;
+background-color: 'light gray';
 }
 """
 
@@ -55,12 +55,13 @@ background-color: 0xC0C0C0;
 
     def initUI(self):
         self.init_pic()
-        self.init_menu()
         self.init_border()
+        self.init_menu()
         
         self.setWindowTitle('Minesweeper')
         self.setFixedSize(self.difficulty['width'] * 16 + 20,
-                self.difficulty['height'] * 16 + 62)
+                self.difficulty['height'] * 16 + 62 + \
+                0 if sys.platform == "darwin" else self.menuWidget().height())
 
         self.setStyleSheet(self._BACKGROUND)
 
@@ -352,7 +353,7 @@ class Board(QWidget):
                 self.l = False
                 if self.r:
                     thisr = 'm'
-                    self.r = False
+                    #self.r = False
                 else:
                     thisr = 'l'
         elif event.button() == Qt.RightButton:
@@ -360,7 +361,7 @@ class Board(QWidget):
                 self.r = False
                 if self.l:
                     thisr = 'm'
-                    self.l = False
+                    #self.l = False
                 else:
                     thisr = 'r'
         elif event.button() == Qt.MiddleButton:
