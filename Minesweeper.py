@@ -49,12 +49,14 @@ class Minesweeper(object):
 
             # Make sure first click is a empty grid
             first_click_serial = first_click[0] * self.width + first_click[1]
-            unavailable = [first_click_serial]
+            unavailable = []
             for row,col in self.neighbors(first_click[0],first_click[1]):
                 unavailable.append(row*self.width + col)
+            print(unavailable)
             available_squares = list(range(self.width * self.height))
+            print(available_squares)
             for serial in unavailable:
-                available_squares.pop(serial)
+                available_squares.remove(serial)
             serials = random.sample(available_squares, k=self.num_mines)
 
             # Generate mines on the board and stores their locations
@@ -149,11 +151,17 @@ class Minesweeper(object):
         return self.board.get_mines()
 
     def win(self):
+        self.finish_time = self.get_time()
+        for pos in range(self.height * self.width):
+            row = pos // self.width
+            col = pos % self.width
+            if self.board.get_pos(row,col) == _MINE_:
+                self.display_board[row][col] = FLAGGED
         self.is_finished = True
         self.result = True
-        self.finish_time = self.get_time()
 
     def lose(self, death_row, death_col):
+        self.finish_time = self.get_time()
         self.is_finished = True
         self.result = False
         for pos in range(self.height * self.width):
@@ -167,9 +175,7 @@ class Minesweeper(object):
             elif self.board.get_pos(row,col) == _MINE_:
                 self.display_board[row][col] = _MINE_
         self.display_board[death_row][death_col] = DEATH_MINE
-
-        self.finish_time = self.get_time()
-
+        
     def get_total_3bv(self):
         total_3bv = 0
 
