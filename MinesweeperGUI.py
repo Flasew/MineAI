@@ -6,7 +6,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from threading import Lock
 
-from MinesweeperGame import *
+from Minesweeper import *
+from Minesweeper import Minesweeper as mgame
 
 # PIC Const
 IMG_BORDER = {'tb': 'resources/images_16/bordertb.gif',
@@ -34,6 +35,8 @@ IMG_HID_GRID ={'blank': 'resources/images_16/blank.gif',
                'bmflag': 'resources/images_16/bombmisflagged.gif', 
                'breveal': 'resources/images_16/bombrevealed.gif'}
 
+DISP_BOARD_STATES = {}
+
 class MinesweeperGUI(QMainWindow):
 
     _BACKGROUND = """
@@ -42,22 +45,22 @@ background-color: 0xC0C0C0;
 }
 """
 
-    def __init__(delf, difficulty):
+    def __init__(self, difficulty):
         super(MinesweeperGUI, self).__init__()
         self.difficulty = difficulty
-        self.mGame = None
+        self.mgame = None
         self.finished = False
 
         self.initUI()
 
     def initUI(self):
+        self.init_pic()
         self.init_menu()
         self.init_border()
-        self.init_pic()
         
         self.setWindowTitle('Minesweeper')
         self.setFixedSize(self.difficulty['width'] * 16 + 20,
-                          self.difficulty['height'] * 16 + 83)
+                self.difficulty['height'] * 16 + 62)
 
         self.setStyleSheet(self._BACKGROUND)
 
@@ -78,7 +81,7 @@ background-color: 0xC0C0C0;
 
         beginner = QAction('&Beginner', 
             self, triggered=lambda: self.new_game(DIFF_BEGINNER))
-        begAct.setShortcut('1')
+        beginner.setShortcut('1')
 
         intermed = QAction('&Intermediate', 
             self, triggered=lambda: self.new_game(DIFF_INTERMED))
@@ -101,7 +104,7 @@ background-color: 0xC0C0C0;
     def init_border(self):
         self.setCentralWidget(QWidget(self))
 
-        def place_Qlabel(image, x, y, w, h):
+        def place_QLabel(image, x, y, w, h):
             label = QLabel(self.centralWidget())
             label.setPixmap(image)
             label.setGeometry(x, y, w, h)
@@ -117,6 +120,7 @@ background-color: 0xC0C0C0;
         for i in range(self.difficulty['width']*4):
             place_QLabel(image, 10+4*i, 0, 4, 10)
             place_QLabel(image, 10+4*i, 52+self.difficulty['height']*16, 4, 10)
+            place_QLabel(image, 10+4*i, 42, 4, 10)
 
         #left and right
         image = IMG_BORDER['lr']
@@ -126,7 +130,6 @@ background-color: 0xC0C0C0;
         for i in range(self.difficulty['height'] * 4):
             place_QLabel(image, 0, 52+4*i, 10, 4)
             place_QLabel(image, 10+16*self.difficulty['width'], 52+4*i, 10, 4)
-            place_QLabel(IMG_BORDER['tb'], 10+4*i, 42, 4, 10)
 
         # joints
         place_QLabel(IMG_BORDER['jointl'], 0, 42, 10, 10)
@@ -143,12 +146,19 @@ background-color: 0xC0C0C0;
         for pic in IMG_REV_GRID:
             IMG_REV_GRID[pic] = QPixmap(IMG_REV_GRID[pic])
 
+        DISP_BOARD_STATES.update({HIDDEN: IMG_HID_GRID['blank'],
+                         FLAGGED: IMG_HID_GRID['bflag'],
+                         DEATH_MINE: IMG_HID_GRID['bdeath'],
+                         MISFLAGGED: IMG_HID_GRID['bmflag'],
+                         -1: IMG_HID_GRID['breveal']})
+        DISP_BOARD_STATES.update(IMG_REV_GRID)
+
     def new_game(self, difficulty):
         if self.difficulty == difficulty:
             self.board.reset()
 
         else:
-            self.Board.setParent(None)
+            self.board.setParent(None)
             # self.Face.setParent(None)
             # self.time_counter.setParent(None)
             # self.mine_counter.setParent(None)
@@ -162,23 +172,25 @@ background-color: 0xC0C0C0;
             # self.face = Face(self)
             # self.time_counter = Timecounter(self)
             # self.mine_counter = Minecounter(self)
+        self.finished = False
+        self.mgame = None
 
         
 class Grid(QLabel):
     def __init__(self, parrent):
-        super.__init__(parrent)
+        super().__init__(parrent)
         self.mine_state = HIDDEN
 
 class Board(QWidget):
 
     def __init__(self, game):
-        super.__init__(game.centralWidget())
+        super().__init__(game.centralWidget())
 
         self.game = game
 
         self.setGeometry(10, 52, 
             self.game.difficulty['width']*16, self.game.difficulty['height']*16)
-        self.setMouseTracking(True)
+        #self.setMouseTracking(True)
 
         self.l = False
         self.r = False
@@ -194,19 +206,21 @@ class Board(QWidget):
 
         # init grid
         self.grids = []
+
         for row in range(self.game.difficulty['height']):
             self.grids.append([])
             for col in range(self.game.difficulty['width']):
                 grid = Grid(self)
                 grid.setPixmap(IMG_HID_GRID['blank'])
+                grid.setGeometry(col*16, row*16, 16, 16)
                 self.grids[row].append(grid)
 
     def reset(self):
+        self.flagged = []
         for grid_rows in self.grids:
             for grid in grid_rows:
-                if grid.mine_state != HIDDEN:
-                    grid.mine_state = HIDDEN
-                    grid.setPixmap(IMG_HID_GRID['blank'])
+                grid.mine_state = HIDDEN
+                grid.setPixmap(IMG_HID_GRID['blank'])
 
     def l_press(self, row, col):
         if self.grids[row][col].mine_state == HIDDEN:
@@ -215,7 +229,7 @@ class Board(QWidget):
     def l_release(self, row, col):
         # start new game if is first click
         if self.game.mgame == None:
-            self.game.mgame = mgame(self.game.difficulty, row, col)
+            self.game.mgame = mgame(self.game.difficulty, (row, col))
             for pos in self.flagged:
                 self.game.mgame.flag(pos[0], pos[1])
         changed_grids = self.game.mgame.click(row, col)
@@ -229,22 +243,22 @@ class Board(QWidget):
     def r_press(self, row, col):
         changed_grid = []
         cur_grid = self.grids[row][col]
-            if cur_grid.mine_state != OPEN:
-                if self.game.mgame: 
-                    changed_grid = self.game.mgame.flag(row, col)
-                    self.update(changed_grid)
-                else:
-                    if cur_grid.mine_state == HIDDEN:
-                        self.flagged.append((row, col))
-                        cur_grid.mine_state = FLAGGED
-                        cur_grid.show(IMG_HID_GRID['bflag'])
-                    elif cur_grid.mine_state == FLAGGED:
-                        try:
-                            self.flagged.remove((cur_grid.row, cur_grid.col))
-                            cur_grid.mine_state = HIDDEN
-                            cur_grid.show(IMG_HID_GRID['blank'])
-                        except:
-                            pass
+        if cur_grid.mine_state != OPEN:
+            if self.game.mgame: 
+                changed_grid = self.game.mgame.flag(row, col)
+                self.update(changed_grid)
+            else:
+                if cur_grid.mine_state == HIDDEN:
+                    self.flagged.append((row, col))
+                    cur_grid.mine_state = FLAGGED
+                    cur_grid.setPixmap(IMG_HID_GRID['bflag'])
+                elif cur_grid.mine_state == FLAGGED:
+                    try:
+                        self.flagged.remove((cur_grid.row, cur_grid.col))
+                        cur_grid.mine_state = HIDDEN
+                        cur_grid.setPixmap(IMG_HID_GRID['blank'])
+                    except:
+                        pass
 
     def r_release(self, row, col):
         pass
@@ -253,14 +267,15 @@ class Board(QWidget):
         nbh = self.neighbors(row, col)
         for i in nbh:
             if self.grids[i[0]][i[1]].mine_state == HIDDEN:
-                self.grids[row][col].setPixmap(IMG_REV_GRID[0])
+                self.grids[i[0]][i[1]].setPixmap(IMG_REV_GRID[0])
 
 
     def m_release(self, row, col):
-
+        for i in self.neighbors(row, col):
+            if self.grids[i[0]][i[1]].mine_state == HIDDEN:
+                self.grids[i[0]][i[1]].setPixmap(IMG_HID_GRID['blank'])
         if self.game.mgame:
             changed_grids = self.game.mgame.chord(row, col)
-            changed_grids.extand(self.neighbors(row, col))
             if self.game.mgame.finished():
                 self.game.finished = True
                 print(self.game.mgame.get_time())
@@ -281,12 +296,14 @@ class Board(QWidget):
         self.m_press(row, col)
         self.m_release(row, col)
 
-    def mouse_pressed(self, e):
+    def mouse_pressed(self, event):
+        print("mouse press")
 
         if self.game.finished: 
             return 
 
-        self.rl_lock.accquire()
+        thisp = 'n'
+        #self.rl_lock.acquire()
         if event.button() == Qt.LeftButton:
             self.l = True
             if self.r:
@@ -299,34 +316,36 @@ class Board(QWidget):
                 thisp = 'm'
             else:
                 thisp = 'r'
-        elif event.button == Qt.MiddleButton:
+        elif event.button() == Qt.MiddleButton:
             thisp = 'm'
 
-        self.rl_lock.release()
+        #self.rl_lock.release()
 
         x = event.x()
         y = event.y()
 
         if x < 0 or y < 0 or \
-           x >= self.difficulty['width'] * 16 or y >= self.difficulty['height'] * 16:
+           x >= self.game.difficulty['width'] * 16 or \
+           y >= self.game.difficulty['height'] * 16:
             return
 
         row = y // 16
         col = x // 16
-        self.prev_grid = grids[row,col]
+        self.prev = [row, col]
 
         if thisp == 'l':
             self.l_press(row, col)
         elif thisp == 'r':
             self.r_press(row, col)
-        elif thisp = 'm':
+        elif thisp == 'm':
             self.m_press(row, col)
 
-    def mouse_relased(self, e):
+    def mouse_released(self, event):
+        print("mouse release")
         if self.game.finished: 
             return 
 
-        self.rl_lock.accquire()
+        #self.rl_lock.acquire()
         thisr = 'n'
         if event.button() == Qt.LeftButton:
             if self.l:
@@ -344,55 +363,59 @@ class Board(QWidget):
                     self.l = False
                 else:
                     thisr = 'r'
-        elif event.button() == Qt.MiddleButton():
+        elif event.button() == Qt.MiddleButton:
             self.l = self.r = False
             thisr = 'm'
-        self.rl_lock.release()
+        #self.rl_lock.release()
 
         x = event.x()
         y = event.y()
 
         if x < 0 or y < 0 or \
-           x >= self.difficulty['width'] * 16 or y >= self.difficulty['height'] * 16:
+           x >= self.game.difficulty['width'] * 16 or \
+           y >= self.game.difficulty['height'] * 16:
             return
 
         row = y // 16
         col = x // 16
 
-        if thisp == 'l':
+        if thisr == 'l':
             self.l_release(row, col)
-        elif thisp == 'r':
+        elif thisr == 'r':
             self.r_release(row, col)
-        elif thisp == 'm':
+        elif thisr == 'm':
             self.m_release(row, col)
 
-    def mouse_move(self, e):
+    def mouse_moved(self, event):
+        print("mouse move")
         if self.game.finished:
             return
-        self.rl_lock.accquire()
+        thism = 'n'
+        #self.rl_lock.acquire()
         if self.l and self.r:
-            thism = 'c'
+            thism = 'm'
         elif self.l:
             thism = 'l'
         elif self.r:
             thism = 'r'
-        self.rl_lock.release()
+        #self.rl_lock.release()
 
         x = event.x()
         y = event.y()
 
         if x < 0 or y < 0 or \
-           x >= self.difficulty['width'] * 16 or y >= self.difficulty['height'] * 16:
+           x >= self.game.difficulty['width'] * 16 or \
+           y >= self.game.difficulty['height'] * 16:
             return
 
         row = y // 16
         col = x // 16
 
-        if row == self.prev_grid[0] and col == self.prev_grid[1]:
+        if row == self.prev[0] and col == self.prev[1]:
             return
 
         if thism == 'm':
-            for points in self.neighbors(prev_grid[0], prev_grid[1]):
+            for points in self.neighbors(self.prev[0], self.prev[1]):
                 if self.grids[points[0]][points[1]].mine_state == HIDDEN:
                     self.grids[points[0]][points[1]].setPixmap(IMG_HID_GRID['blank'])
             for points in self.neighbors(row, col):
@@ -400,12 +423,12 @@ class Board(QWidget):
                     self.grids[points[0]][points[1]].setPixmap(IMG_REV_GRID[0])
 
         elif thism == 'l':
-            if self.grids[prev_grid[0]][prev_grid[1]].mine_state == HIDDEN:
-                    self.grids[prev_grid[0]][prev_grid[1]].setPixmap(IMG_HID_GRID['blank'])
+            if self.grids[self.prev[0]][self.prev[1]].mine_state == HIDDEN:
+                    self.grids[self.prev[0]][self.prev[1]].setPixmap(IMG_HID_GRID['blank'])
             if self.grids[row][col].mine_state == HIDDEN:
                 self.grids[row][col].setPixmap(IMG_REV_GRID[0])
 
-        self.prev_grid = [row, col]
+        self.prev = [row, col]
 
     def update(self, changed_grids):
         """Update displayed board"""
@@ -414,16 +437,16 @@ class Board(QWidget):
             row = grid[0]
             col = grid[1]
             self.grids[row][col].mine_state = display_board[row][col]
-            self.grids[row][col].show(DISP_BOARD_STATES[display_board[row][col]])
+            self.grids[row][col].setPixmap(DISP_BOARD_STATES[display_board[row][col]])
 
     def update_all_grids(self):
         """Update displayed board"""
         display_board = self.game.mgame.get_board()
-        for row in range(self.difficulty['height']):
-            for col in range(self.difficulty['width']):
+        for row in range(self.game.difficulty['height']):
+            for col in range(self.game.difficulty['width']):
                 if self.grids[row][col].mine_state != display_board[row][col]:
                     self.grids[row][col].mine_state = display_board[row][col]
-                    self.grids[row][col].show(DISP_BOARD_STATES[display_board[row][col]])
+                    self.grids[row][col].setPixmap(DISP_BOARD_STATES[display_board[row][col]])
 
     def neighbors(self, row, col):
         """Return a list of neighboring locations specified by row and col"""
