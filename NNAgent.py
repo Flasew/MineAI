@@ -16,11 +16,11 @@ class NNAgent(object):
         self.board = None
 
     def play(self):
-        #self.mGame = MinesweeperGame(self.GUI.difficulty, (0, 0))
         self.mGame = Minesweeper(DIFF_BEGINNER, (0, 0))
+        self.GUI.mGame = self.mGame
 
-        #self.GUI.clickOn(0, 0)
-        self.mGame.click(0, 0)
+        self.GUI.on_click(0, 0)
+        #self.mGame.click(0, 0)
 
         self.display_board = self.mGame.get_board()
         self.board = self.mGame.board
@@ -28,7 +28,8 @@ class NNAgent(object):
             for i, j in self.perimeter_grids(self.display_board):
                 prob = self.NN.predict(self.to_NNstate(i, j))
                 if prob < 0.1:
-                    self.mGame.flag(i, j)
+                    self.GUI.on_flag(i, j)
+                    #self.mGame.flag(i, j)
 
             prob_array = np.zeros((self.mGame.difficulty['width'], self.mGame.difficulty['height']))
             max_i = None
@@ -38,8 +39,8 @@ class NNAgent(object):
                 if prob_array[i, j] == prob_array.max():
                     max_i, max_j = i, j
 
-            #self.GUI.clickOn(i, j)
-            self.mGame.click(max_i, max_j)
+            self.GUI.on_click(i, j)
+            #self.mGame.click(max_i, max_j)
             #print(self.board.board)
             y = 0.0 if self.board.board[max_i, max_j] == -1 else 1.0
             self.NN.train(self.to_NNstate(max_i, max_j), [[y]])
@@ -84,6 +85,6 @@ class NNAgent(object):
 
 if __name__ == '__main__':
     agent = NNAgent(None)
-    for i in range(100000):
+    for i in range(100):
         agent.play()
     agent.NN.save()

@@ -28,8 +28,8 @@ class NN(object):
         self.saver = tf.train.Saver()
         self.sess = tf.InteractiveSession()
 
-        if os.path.exists('model.tf'):
-            self.saver.restore(self.sess, "model.tf")
+        if os.path.exists('./model.tf'):
+            self.saver.restore(self.sess, "./model.tf")
         else:
             init = tf.global_variables_initializer()
             self.sess.run(init)
@@ -56,7 +56,7 @@ class NN(object):
         _, c = self.sess.run([self.optimizer, self.cost], feed_dict={self.x: batch_x, self.y: batch_y})
 
     def save(self):
-        self.saver.save(self.sess, "model.tf")
+        self.saver.save(self.sess, "./model.tf")
 
 if __name__ == '__main__':
     pass
