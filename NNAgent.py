@@ -17,9 +17,9 @@ class NNAgent(object):
 
     def play(self):
         self.mGame = Minesweeper(DIFF_BEGINNER, (0, 0))
-        self.GUI.mGame = self.mGame
+        self.GUI.mgame = self.mGame
 
-        self.GUI.on_click(0, 0)
+        self.GUI.board.on_click(0, 0)
         #self.mGame.click(0, 0)
 
         self.display_board = self.mGame.get_board()
@@ -28,18 +28,19 @@ class NNAgent(object):
             for i, j in self.perimeter_grids(self.display_board):
                 prob = self.NN.predict(self.to_NNstate(i, j))
                 if prob < 0.1:
-                    self.GUI.on_flag(i, j)
+                    self.GUI.board.on_flag(i, j)
                     #self.mGame.flag(i, j)
 
             prob_array = np.zeros((self.mGame.difficulty['width'], self.mGame.difficulty['height']))
             max_i = None
             max_j = None
             for i, j in self.perimeter_grids(self.display_board):
-                prob_array[i, j] = self.NN.predict(self.to_NNstate(i, j))
-                if prob_array[i, j] == prob_array.max():
+                possibility = self.NN.predict(self.to_NNstate(i, j))
+                if possibility > prob_array.max():
                     max_i, max_j = i, j
+                    prob_array[i, j] = possibility
 
-            self.GUI.on_click(i, j)
+            self.GUI.board.on_click(i, j)
             #self.mGame.click(max_i, max_j)
             #print(self.board.board)
             y = 0.0 if self.board.board[max_i, max_j] == -1 else 1.0
