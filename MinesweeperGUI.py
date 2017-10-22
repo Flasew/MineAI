@@ -4,6 +4,7 @@ import numpy as np
 from PyQt5.Qt import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QTimer
 from threading import Lock
 
 from Minesweeper import *
@@ -79,11 +80,10 @@ background-color: 'light gray';
             triggered=lambda: self.new_game(self.difficulty))
         newGame.setShortcut('F2')
 
-        exit = QAction('&Exit', self, triggered=qApp.quit)
+        exit = QAction(' &Exit', self, triggered=qApp.quit)
         exit.setShortcut('Alt+F4')
 
         aiPlay = QAction('&AI Play', self, triggered=lambda: self.ai_play())
-
 
         beginner = QAction('&Beginner', 
             self, triggered=lambda: self.new_game(DIFF_BEGINNER))
@@ -163,9 +163,12 @@ background-color: 'light gray';
     def new_game(self, difficulty):
         if self.difficulty == difficulty:
             self.board.reset()
+            self.status_bar.reset()
 
         else:
             self.board.setParent(None)
+            self.status_bar.reset()
+            self.status_bar.setParent(None)
             # self.Face.setParent(None)
             # self.time_counter.setParent(None)
             # self.mine_counter.setParent(None)
@@ -174,7 +177,7 @@ background-color: 'light gray';
             self.setFixedSize(self.difficulty['width'] * 16 + 20,
                       self.difficulty['height'] * 16 + 62 + self.menuWidget().height())
             self.init_border()
-            
+            self.status_bar = SBar(self)
             self.board = Board(self)
             # self.face = Face(self)
             # self.time_counter = Timecounter(self)
@@ -194,35 +197,60 @@ class SBar(QWidget):
         super().__init__(game)
         self.game = game
 
-        self.setContentsMargins(0, 0, 0 ,0)
+        self.setContentsMargins(0, 0,0,0)
 
         self.timer = QLabel(self)
         self.time = QLabel(self)
         self.tbv = QLabel(self)
         self.tbvrate = QLabel(self)
 
+        font = QFont("Helvetica", 11)
+
         self.timer.setText("Time:")
+        self.timer.setFont(font)
         self.timer.setAlignment(Qt.AlignLeft)
-        self.timer.setGeometry(0, 0, self.game.difficulty['width']*8, 16)
+        self.timer.setGeometry(2, 2, self.game.difficulty['width']*8, 16)
 
-        self.time.setText("0.00")
+        self.time.setText("0.0")
+        self.time.setFont(font)
         self.time.setAlignment(Qt.AlignLeft)
-        self.time.setGeometry(0, 16, self.game.difficulty['width']*8, 16)
+        self.time.setGeometry(2, 18, self.game.difficulty['width']*8, 16)
 
-        self.tbv.setText("3BV: --")
+        self.tbv.setText("3BV: --/--")
+        self.tbv.setFont(font)
         self.tbv.setAlignment(Qt.AlignLeft)
-        self.tbv.setGeometry(self.game.difficulty['width']*8, 0, 
+        self.tbv.setGeometry(self.game.difficulty['width']*8 + 2, 2, 
             self.game.difficulty['width']*8, 16)
 
         self.tbvrate.setText("3BV/s: --")
+        self.tbvrate.setFont(font)
         self.tbvrate.setAlignment(Qt.AlignLeft)
-        self.tbvrate.setGeometry(self.game.difficulty['width']*8, 16, 
+        self.tbvrate.setGeometry(self.game.difficulty['width']*8 +2, 18, 
             self.game.difficulty['width']*8, 16)
 
-        self.setGeometry(10+self.game.menu_height, 10, self.game.difficulty['width']*16, 32)
+        self.qtimer = QTimer(self)
+        self.qtimer.setInterval(50)
+        self.qtimer.setTimerType(Qt.PreciseTimer)
+        self.qtimer.timeout.connect(self.update_time)
+
+        self.setGeometry(10, 10+self.game.menu_height, self.game.difficulty['width']*16, 32)
         self.show()
         self.mouseReleaseEvent = lambda e: self.game.new_game(self.game.difficulty)
 
+    @pyqtSlot()
+    def update_time(self):
+        self.time.setText("{:.2f}".format(self.game.mgame.get_time()))
+
+    def update_3bv(self):
+        self.tbv.setText("3BV: {:d}/{:d}".\
+            format(self.game.mgame.get_current_3bv(), self.game.mgame.get_3bv()))
+        self.tbvrate.setText("3BV/s: {:.2f}".format(self.game.mgame.get_current_3bv()/self.game.mgame.get_time()))
+
+    def reset(self):
+        self.qtimer.stop()
+        self.time.setText("0.0")
+        self.tbv.setText("3BV: --/--")
+        self.tbvrate.setText("3BV/s: --")
 
 class Grid(QLabel):
     def __init__(self, parrent):
@@ -278,10 +306,13 @@ class Board(QWidget):
         # start new game if is first click
         if self.game.mgame == None:
             self.game.mgame = mgame(self.game.difficulty, (row, col))
+            self.game.status_bar.qtimer.start()
             for pos in self.flagged:
                 self.game.mgame.flag(pos[0], pos[1])
         changed_grids = self.game.mgame.click(row, col)
         if self.game.mgame.finished():
+            self.game.status_bar.qtimer.stop()
+            self.game.status_bar.update_3bv()
             self.game.finished = True
             print(self.game.mgame.get_time())
             self.update_all_grids()
@@ -325,6 +356,8 @@ class Board(QWidget):
         if self.game.mgame:
             changed_grids = self.game.mgame.chord(row, col)
             if self.game.mgame.finished():
+                self.game.status_bar.qtimer.stop()
+                self.game.status_bar.update_3bv()
                 self.game.finished = True
                 self.update_all_grids()
                 
