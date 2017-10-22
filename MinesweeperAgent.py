@@ -24,7 +24,8 @@ class Agent:
                     self.boundary.append((row,col,))
     def is_boundary(self,row,col):
         for nrow, ncol in game.neighbors(row, col):
-            if self.board[nrow][ncol] != MB.HIDDEN:
+            if row != nrow and col != nrol
+                and self.board[nrow][ncol] != MB.HIDDEN:
                 return True
         return False
     def boundary_split(self):
@@ -54,5 +55,5 @@ class Agent:
     def naive_flag(self):
         for grid in self.boundary:
             for nrow,ncol in game.neighbors(grid[0],grid[1]):
-                if game.[nrow][ncol] != MB.HIDDEN
+                if self.board[nrow][ncol] != MB.HIDDEN
                     and self.board[nrow]:
