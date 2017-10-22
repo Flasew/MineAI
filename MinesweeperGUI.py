@@ -8,6 +8,7 @@ from threading import Lock
 
 from Minesweeper import *
 from Minesweeper import Minesweeper as mgame
+from NNAgent import *
 
 # PIC Const
 IMG_BORDER = {'tb': 'resources/images_16/bordertb.gif',
@@ -41,7 +42,7 @@ class MinesweeperGUI(QMainWindow):
 
     _BACKGROUND = """
 QMainWindow{
-background-color: 0xC0C0C0;
+background-color: 'light gray';
 }
 """
 
@@ -55,16 +56,18 @@ background-color: 0xC0C0C0;
 
     def initUI(self):
         self.init_pic()
-        self.init_menu()
         self.init_border()
+        self.init_menu()
         
+        self.menu_height = 0 if sys.platform == "darwin" else self.menuWidget().height()
         self.setWindowTitle('Minesweeper')
         self.setFixedSize(self.difficulty['width'] * 16 + 20,
-                self.difficulty['height'] * 16 + 62)
+                self.difficulty['height'] * 16 + 62 + self.menu_height)
 
         self.setStyleSheet(self._BACKGROUND)
 
         self.board = Board(self)
+        self.status_bar = SBar(self)
         # self.face = Face(self)
         # self.time_counter = Timecounter(self)
         # self.mine_counter = Minecounter(self)
@@ -78,6 +81,9 @@ background-color: 0xC0C0C0;
 
         exit = QAction('&Exit', self, triggered=qApp.quit)
         exit.setShortcut('Alt+F4')
+
+        aiPlay = QAction('&AI Play', self, triggered=lambda: self.ai_play())
+
 
         beginner = QAction('&Beginner', 
             self, triggered=lambda: self.new_game(DIFF_BEGINNER))
@@ -94,6 +100,7 @@ background-color: 0xC0C0C0;
         menubar = self.menuBar()
         gameMenu = menubar.addMenu('&Game')
         gameMenu.addAction(newGame)
+        gameMenu.addAction(aiPlay)
         gameMenu.addSeparator()
         gameMenu.addAction(beginner)
         gameMenu.addAction(intermed)
@@ -175,7 +182,48 @@ background-color: 0xC0C0C0;
         self.finished = False
         self.mgame = None
 
+    def ai_play(self):
+        agent = NNAgent(self)
+        for i in range(10):
+            agent.play()
+        agent.NN.save()
+
+class SBar(QWidget):
+    def __init__(self, game):
         
+        super().__init__(game)
+        self.game = game
+
+        self.setContentsMargins(0, 0, 0 ,0)
+
+        self.timer = QLabel(self)
+        self.time = QLabel(self)
+        self.tbv = QLabel(self)
+        self.tbvrate = QLabel(self)
+
+        self.timer.setText("Time:")
+        self.timer.setAlignment(Qt.AlignLeft)
+        self.timer.setGeometry(0, 0, self.game.difficulty['width']*8, 16)
+
+        self.time.setText("0.00")
+        self.time.setAlignment(Qt.AlignLeft)
+        self.time.setGeometry(0, 16, self.game.difficulty['width']*8, 16)
+
+        self.tbv.setText("3BV: --")
+        self.tbv.setAlignment(Qt.AlignLeft)
+        self.tbv.setGeometry(self.game.difficulty['width']*8, 0, 
+            self.game.difficulty['width']*8, 16)
+
+        self.tbvrate.setText("3BV/s: --")
+        self.tbvrate.setAlignment(Qt.AlignLeft)
+        self.tbvrate.setGeometry(self.game.difficulty['width']*8, 16, 
+            self.game.difficulty['width']*8, 16)
+
+        self.setGeometry(10+self.game.menu_height, 10, self.game.difficulty['width']*16, 32)
+        self.show()
+        self.mouseReleaseEvent = lambda e: self.game.new_game(self.game.difficulty)
+
+
 class Grid(QLabel):
     def __init__(self, parrent):
         super().__init__(parrent)
@@ -278,7 +326,6 @@ class Board(QWidget):
             changed_grids = self.game.mgame.chord(row, col)
             if self.game.mgame.finished():
                 self.game.finished = True
-                print(self.game.mgame.get_time())
                 self.update_all_grids()
                 
             else:
@@ -297,7 +344,6 @@ class Board(QWidget):
         self.m_release(row, col)
 
     def mouse_pressed(self, event):
-        print("mouse press")
 
         if self.game.finished: 
             return 
@@ -341,7 +387,6 @@ class Board(QWidget):
             self.m_press(row, col)
 
     def mouse_released(self, event):
-        print("mouse release")
         if self.game.finished: 
             return 
 
@@ -352,7 +397,7 @@ class Board(QWidget):
                 self.l = False
                 if self.r:
                     thisr = 'm'
-                    self.r = False
+                    #self.r = False
                 else:
                     thisr = 'l'
         elif event.button() == Qt.RightButton:
@@ -360,7 +405,7 @@ class Board(QWidget):
                 self.r = False
                 if self.l:
                     thisr = 'm'
-                    self.l = False
+                    #self.l = False
                 else:
                     thisr = 'r'
         elif event.button() == Qt.MiddleButton:
@@ -387,7 +432,6 @@ class Board(QWidget):
             self.m_release(row, col)
 
     def mouse_moved(self, event):
-        print("mouse move")
         if self.game.finished:
             return
         thism = 'n'

@@ -2,7 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1604cc34-d7fd-4765-b2e4-09bc9b8196c8" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/model.tf.data-00000-of-00001" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/model.tf.index" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/model.tf.meta" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/NN.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/NNAgent.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/checkpoint" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/MineAI.iml" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Minesweeper.py" afterPath="$PROJECT_DIR$/Minesweeper.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/MinesweeperAgent.py" afterPath="$PROJECT_DIR$/MinesweeperAgent.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/MinesweeperGUI.py" afterPath="$PROJECT_DIR$/MinesweeperGUI.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,7 +30,7 @@
               <entry file="file://$PROJECT_DIR$/Minesweeper.py">
                 <provider selected="true" editor-type-id="text-editor">
                   <state relative-caret-position="1710">
-                    <caret line="206" column="93" lean-forward="true" selection-start-line="206" selection-start-column="93" selection-end-line="206" selection-end-column="93" />
+                    <caret line="206" column="93" lean-forward="false" selection-start-line="206" selection-start-column="93" selection-end-line="206" selection-end-column="93" />
                     <folding />
                   </state>
                 </provider>
@@ -36,8 +46,8 @@
       <file leaf-file-name="MinesweeperAgent.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/MinesweeperAgent.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="198">
-              <caret line="17" column="28" lean-forward="false" selection-start-line="17" selection-start-column="28" selection-end-line="17" selection-end-column="28" />
+            <state relative-caret-position="289">
+              <caret line="104" column="41" lean-forward="true" selection-start-line="104" selection-start-column="41" selection-end-line="104" selection-end-column="41" />
               <folding />
             </state>
           </provider>
@@ -184,15 +194,15 @@
     <entry file="file://$PROJECT_DIR$/Minesweeper.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1710">
-          <caret line="206" column="93" lean-forward="true" selection-start-line="206" selection-start-column="93" selection-end-line="206" selection-end-column="93" />
+          <caret line="206" column="93" lean-forward="false" selection-start-line="206" selection-start-column="93" selection-end-line="206" selection-end-column="93" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/MinesweeperAgent.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="17" column="28" lean-forward="false" selection-start-line="17" selection-start-column="28" selection-end-line="17" selection-end-column="28" />
+        <state relative-caret-position="289">
+          <caret line="104" column="41" lean-forward="true" selection-start-line="104" selection-start-column="41" selection-end-line="104" selection-end-column="41" />
           <folding />
         </state>
       </provider>
