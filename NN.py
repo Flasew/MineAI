@@ -1,4 +1,5 @@
 import tensorflow as tf
+import os
 
 n_input = 300
 n_hidden_1 = 256
@@ -13,20 +14,25 @@ class NN(object):
         self.y = tf.placeholder("float", [None, n_output])
 
         self.weights = {
-            'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
-            'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
-            'out': tf.Variable(tf.random_normal([n_hidden_2, n_output]))
+            'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1]), name='h1'),
+            'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2]), name='h2'),
+            'out': tf.Variable(tf.random_normal([n_hidden_2, n_output]), name='out_weight')
         }
 
         self.biases = {
-            'b1': tf.Variable(tf.random_normal([n_hidden_1])),
-            'b2': tf.Variable(tf.random_normal([n_hidden_2])),
-            'out': tf.Variable(tf.random_normal([n_output]))
+            'b1': tf.Variable(tf.random_normal([n_hidden_1]), name='b1'),
+            'b2': tf.Variable(tf.random_normal([n_hidden_2]), name='b2'),
+            'out': tf.Variable(tf.random_normal([n_output]), name='out_bias')
         }
-        init = tf.global_variables_initializer()
+
+        self.saver = tf.train.Saver()
         self.sess = tf.InteractiveSession()
-        self.sess.run(init)
-        self.avg_cost = 0.0
+
+        if os.path.exists('model.tf'):
+            self.saver.restore(self.sess, "model.tf")
+        else:
+            init = tf.global_variables_initializer()
+            self.sess.run(init)
 
         # First Hidden layer with RELU activation
         layer_1 = tf.add(tf.matmul(self.x, self.weights['h1']), self.biases['b1'])
@@ -48,7 +54,9 @@ class NN(object):
 
     def train(self, batch_x, batch_y):
         _, c = self.sess.run([self.optimizer, self.cost], feed_dict={self.x: batch_x, self.y: batch_y})
-        print(c)
+
+    def save(self):
+        self.saver.save(self.sess, "model.tf")
 
 if __name__ == '__main__':
     pass
