@@ -8,6 +8,7 @@ from threading import Lock
 
 from Minesweeper import *
 from Minesweeper import Minesweeper as mgame
+from NNAgent import *
 
 # PIC Const
 IMG_BORDER = {'tb': 'resources/images_16/bordertb.gif',
@@ -58,10 +59,10 @@ background-color: 'light gray';
         self.init_border()
         self.init_menu()
         
+        self.menu_height = 0 if sys.platform == "darwin" else self.menuWidget().height()
         self.setWindowTitle('Minesweeper')
         self.setFixedSize(self.difficulty['width'] * 16 + 20,
-                self.difficulty['height'] * 16 + 62 + \
-                0 if sys.platform == "darwin" else self.menuWidget().height())
+                self.difficulty['height'] * 16 + 62 + self.menu_height)
 
         self.setStyleSheet(self._BACKGROUND)
 
@@ -182,7 +183,10 @@ background-color: 'light gray';
         self.mgame = None
 
     def ai_play(self):
-        pass
+        agent = NNAgent(self)
+        for i in range(10):
+            agent.play()
+        agent.NN.save()
 
 class SBar(QWidget):
     def __init__(self, game):
@@ -215,7 +219,7 @@ class SBar(QWidget):
         self.tbvrate.setGeometry(self.game.difficulty['width']*8, 16, 
             self.game.difficulty['width']*8, 16)
 
-        self.setGeometry(10, 10, self.game.difficulty['width']*16, 32)
+        self.setGeometry(10+self.game.menu_height, 10, self.game.difficulty['width']*16, 32)
         self.show()
         self.mouseReleaseEvent = lambda e: self.game.new_game(self.game.difficulty)
 
