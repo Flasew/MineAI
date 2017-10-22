@@ -81,6 +81,9 @@ background-color: 'light gray';
         exit = QAction('&Exit', self, triggered=qApp.quit)
         exit.setShortcut('Alt+F4')
 
+        aiPlay = QAction('&AI Play', self, triggered=lambda: self.ai_play())
+
+
         beginner = QAction('&Beginner', 
             self, triggered=lambda: self.new_game(DIFF_BEGINNER))
         beginner.setShortcut('1')
@@ -96,6 +99,7 @@ background-color: 'light gray';
         menubar = self.menuBar()
         gameMenu = menubar.addMenu('&Game')
         gameMenu.addAction(newGame)
+        gameMenu.addAction(aiPlay)
         gameMenu.addSeparator()
         gameMenu.addAction(beginner)
         gameMenu.addAction(intermed)
@@ -177,6 +181,9 @@ background-color: 'light gray';
         self.finished = False
         self.mgame = None
 
+    def ai_play(self):
+        pass
+
 class SBar(QWidget):
     def __init__(self, game):
         
@@ -207,7 +214,6 @@ class SBar(QWidget):
         self.tbvrate.setAlignment(Qt.AlignLeft)
         self.tbvrate.setGeometry(self.game.difficulty['width']*8, 16, 
             self.game.difficulty['width']*8, 16)
-
 
         self.setGeometry(10, 10, self.game.difficulty['width']*16, 32)
         self.show()
