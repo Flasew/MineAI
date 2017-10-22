@@ -66,6 +66,7 @@ background-color: 'light gray';
         self.setStyleSheet(self._BACKGROUND)
 
         self.board = Board(self)
+        self.status_bar = SBar(self)
         # self.face = Face(self)
         # self.time_counter = Timecounter(self)
         # self.mine_counter = Minecounter(self)
@@ -176,7 +177,43 @@ background-color: 'light gray';
         self.finished = False
         self.mgame = None
 
+class SBar(QWidget):
+    def __init__(self, game):
         
+        super().__init__(game)
+        self.game = game
+
+        self.setContentsMargins(0, 0, 0 ,0)
+
+        self.timer = QLabel(self)
+        self.time = QLabel(self)
+        self.tbv = QLabel(self)
+        self.tbvrate = QLabel(self)
+
+        self.timer.setText("Time:")
+        self.timer.setAlignment(Qt.AlignLeft)
+        self.timer.setGeometry(0, 0, self.game.difficulty['width']*8, 16)
+
+        self.time.setText("0.00")
+        self.time.setAlignment(Qt.AlignLeft)
+        self.time.setGeometry(0, 16, self.game.difficulty['width']*8, 16)
+
+        self.tbv.setText("3BV: --")
+        self.tbv.setAlignment(Qt.AlignLeft)
+        self.tbv.setGeometry(self.game.difficulty['width']*8, 0, 
+            self.game.difficulty['width']*8, 16)
+
+        self.tbvrate.setText("3BV/s: --")
+        self.tbvrate.setAlignment(Qt.AlignLeft)
+        self.tbvrate.setGeometry(self.game.difficulty['width']*8, 16, 
+            self.game.difficulty['width']*8, 16)
+
+
+        self.setGeometry(10, 10, self.game.difficulty['width']*16, 32)
+        self.show()
+        self.mouseReleaseEvent = lambda e: self.game.new_game(self.game.difficulty)
+
+
 class Grid(QLabel):
     def __init__(self, parrent):
         super().__init__(parrent)
@@ -279,7 +316,6 @@ class Board(QWidget):
             changed_grids = self.game.mgame.chord(row, col)
             if self.game.mgame.finished():
                 self.game.finished = True
-                print(self.game.mgame.get_time())
                 self.update_all_grids()
                 
             else:
@@ -298,7 +334,6 @@ class Board(QWidget):
         self.m_release(row, col)
 
     def mouse_pressed(self, event):
-        print("mouse press")
 
         if self.game.finished: 
             return 
@@ -342,7 +377,6 @@ class Board(QWidget):
             self.m_press(row, col)
 
     def mouse_released(self, event):
-        print("mouse release")
         if self.game.finished: 
             return 
 
@@ -388,7 +422,6 @@ class Board(QWidget):
             self.m_release(row, col)
 
     def mouse_moved(self, event):
-        print("mouse move")
         if self.game.finished:
             return
         thism = 'n'
