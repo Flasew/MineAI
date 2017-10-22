@@ -293,6 +293,8 @@ class Board(QWidget):
 
     def reset(self):
         self.flagged = []
+        self.l = False
+        self.r = False
         for grid_rows in self.grids:
             for grid in grid_rows:
                 grid.mine_state = HIDDEN
