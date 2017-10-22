@@ -40,10 +40,10 @@ class NNAgent(object):
 
             #self.GUI.clickOn(i, j)
             self.mGame.click(max_i, max_j)
-            print(self.board.board)
+            #print(self.board.board)
             y = 0.0 if self.board.board[max_i, max_j] == -1 else 1.0
             self.NN.train(self.to_NNstate(max_i, max_j), [[y]])
-            self.mGame.print_board()
+            #self.mGame.print_board()
 
         if self.mGame.result:
             self.win += 1
@@ -55,7 +55,7 @@ class NNAgent(object):
     def perimeter_grids(self, board):
         grids = []
         board_list = board.tolist()
-        print(board)
+        #print(board)
         for i in range(len(board_list)):
             for j in range(len(board_list[0])):
                 if board[i, j] == HIDDEN:
@@ -68,19 +68,22 @@ class NNAgent(object):
         for row in range(5):
             for col in range(5):
                 sample = np.zeros(12)
-                if i - 2 + row < 0  or j - 2 + col < 0 or i - 2 + row > self.board.height or i - 2 + col > self.board.width:
+                grid_x = i - 2 + row
+                grid_y = j - 2 + col
+
+                if grid_x < 0  or grid_y < 0 or grid_x >= self.board.height or grid_y >= self.board.width:
                     sample[11] = 1.0
-                elif self.display_board[row, col] == HIDDEN:
+                elif self.display_board[grid_x, grid_y] == HIDDEN:
                     sample[9] = 1.0
-                elif self.display_board[row, col] == FLAGGED:
+                elif self.display_board[grid_x, grid_y] == FLAGGED:
                     sample[10] = 1.0
-                else:
-                    number = self.display_board[row, col]
-                    sample[number] = 1.0
+                elif self.display_board[grid_x, grid_y] >= 0 and self.display_board[grid_x, grid_y] <= 8:
+                    sample[self.display_board[grid_x, grid_y]] = 1.0
                 state = np.concatenate((state, sample))
         return state.reshape(1, 300)
 
 if __name__ == '__main__':
     agent = NNAgent(None)
-    for i in range(100):
+    for i in range(100000):
         agent.play()
+    agent.NN.save()

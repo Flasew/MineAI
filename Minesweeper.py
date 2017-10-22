@@ -52,9 +52,9 @@ class Minesweeper(object):
             unavailable = []
             for row,col in self.neighbors(first_click[0],first_click[1]):
                 unavailable.append(row*self.width + col)
-            print(unavailable)
+            #print(unavailable)
             available_squares = list(range(self.width * self.height))
-            print(available_squares)
+            #print(available_squares)
             for serial in unavailable:
                 available_squares.remove(serial)
             serials = random.sample(available_squares, k=self.num_mines)
@@ -124,7 +124,7 @@ class Minesweeper(object):
         self.start_time = time.time()
         self.finish_time = -1
 
-        self.board.print_board()
+        #self.board.print_board()
         
     def get_result(self):
         return self.result
